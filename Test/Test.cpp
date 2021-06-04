@@ -53,17 +53,28 @@ const int POSE_PAIRS[3][20][2] = {
     {0,17}, {17,18}, {18,19}, {19,20}   // small
 } };
 
+
+///////////////////////////////// my edit:
+
 double distance(double x1, double x2, double y1, double y2)
 {
     double power, dis;
 
     power = pow( x1 - x2, 2) + pow(y1 - y2, 2);
     dis = sqrt(power);
-
+    
     return dis;
-
 }
 
+double degree(double x1, double x2, double y1, double y2)
+{
+    double deg, pi = 3.141592;
+    deg = atan2(y2 - y1, x2 - x1) * (-180 / pi);
+
+    return deg;
+}
+
+///////////////////////////////// end myedit
 int main(int argc, char** argv)
 {
     CommandLineParser parser(argc, argv,
@@ -227,24 +238,22 @@ int main(int argc, char** argv)
           
 
             // Distance:
-
-            //power = pow(rpalm.x - lpalm.x, 2) + pow(rpalm.y - lpalm.y, 2);
-            //dis = sqrt(power);
-            //putText(frame, dis, Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
-            printf("%lf\n", dist);
             
+            dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
+            //putText(frame, %lf , Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            //printf("%lf\n", dist);
+            
+
             // Degree:
 
-
-            //deg_rknee = atan2(rhip.y - rknee.y, rhip.x - rknee.x)*(-180/pi); // Deg = rad * 180/pi
-            //deg_lknee = atan2(lhip.y - lknee.y, lhip.x - lknee.x) * (-180 / pi);
-            //if (deg_rknee < 25 ) {
-            //    putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            //}
-            //if (deg_lknee > 130) {
-            //    putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            //}
+            deg_rknee = degree(rknee.x, rhip.x, rknee.y, rhip.y);
+            deg_lknee = degree(lknee.x, lhip.x, lknee.y, lhip.y);
+            if (deg_rknee < 25 ) {
+                putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            }
+            if (deg_lknee > 130) {
+                putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            }
 
 
             // places of dots by (x,y) position only:
