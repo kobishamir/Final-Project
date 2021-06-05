@@ -199,10 +199,13 @@ int main(int argc, char** argv)
             // net.setPreferableTarget(DNN_TARGET_CUDA);
             
 
+            //Angles define:
+            double lknee_deg, rknee_deg, legs_deg;
 
-            float deg_rknee, deg_lknee, deg_relbow;
-            double pi = 3.1415926;
-            double power, dist;
+
+            //Distance define:
+            double dist;
+
 
             // Body parts defintion
             Point2f head = points[POSE_PAIRS[midx][0][0]];          //0
@@ -241,19 +244,28 @@ int main(int argc, char** argv)
             
             dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
             //putText(frame, %lf , Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            //printf("%lf\n", dist);
-            
-
+      
             // Degree:
 
-            deg_rknee = degree(rknee.x, rhip.x, rknee.y, rhip.y);
-            deg_lknee = degree(lknee.x, lhip.x, lknee.y, lhip.y);
-            if (deg_rknee < 25 ) {
+            rknee_deg = degree(rknee.x, torso.x, rknee.y, torso.y);
+            lknee_deg = degree(lknee.x, torso.x, lknee.y, torso.y);
+            legs_deg = lknee_deg - rknee_deg;
+            //printf("%lf\n", legs_deg);
+            if (legs_deg > 60) {
+                if (lankle.y > rankle.y) {
+                    putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                }
+                if (rankle.y > lknee.y ) {
+                    putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                }
+            }
+
+            /*if (rknee_deg < 30 ) {
                 putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
             }
-            if (deg_lknee > 130) {
+            if (lknee_deg > 130) {
                 putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            }
+            }*/
 
 
             // places of dots by (x,y) position only:
