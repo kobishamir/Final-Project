@@ -250,12 +250,12 @@ int main(int argc, char** argv)
             rknee_deg = degree(rknee.x, torso.x, rknee.y, torso.y);
             lknee_deg = degree(lknee.x, torso.x, lknee.y, torso.y);
             legs_deg = lknee_deg - rknee_deg;
-            //printf("%lf\n", legs_deg);
-            if (legs_deg > 60) {
-                if (lankle.y > rankle.y) {
+            printf("%lf\n", legs_deg);
+            if (legs_deg > 45) {
+                if (lankle.y > rankle.y && lknee.y > rknee.y) {
                     putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
                 }
-                if (rankle.y > lknee.y ) {
+                if (rankle.y > lknee.y && rknee.y > lknee.y) {
                     putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
                 }
             }
