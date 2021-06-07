@@ -69,7 +69,7 @@ double distance(double x1, double x2, double y1, double y2)
 double degree(double x1, double x2, double y1, double y2)
 {
     double deg, pi = 3.141592;
-    deg = atan2(y2 - y1, x2 - x1) * (-180 / pi);
+    deg = atan2(y2 - y1, x2 - x1) * (180 / pi);
 
     return deg;
 }
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 
     //VideoCapture cap("mjpeg://192.168.1.255:8081");  // capture from streaming
     //VideoCapture cap(0); // capture from usb camera
-    VideoCapture cap("Videoclip1.avi");
+    VideoCapture cap("Videoclip3.avi");
     // Check if camera opened successfully
     if (!cap.isOpened()) {
         //printf("hello");
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     */
 
 
-
+    double flag = 0;
     while (1) { // choose between 0-COCO, 1-MPI or 2-HAND
         Mat frame;
         // Capture frame-by-frame
@@ -162,6 +162,7 @@ int main(int argc, char** argv)
         int W = result.size[3];
         // find the position of the body parts
         vector<Point> points(22);
+        
         for (int n = 0; n < nparts; n++)
         {
             // Slice heatmap of corresponding body's part.
@@ -209,6 +210,7 @@ int main(int argc, char** argv)
 
             // Body parts defintion
             Point2f head = points[POSE_PAIRS[midx][0][0]];          //0
+            Point2f neck = points[POSE_PAIRS[midx][0][1]];         //1
             Point2f rshoulder = points[POSE_PAIRS[midx][1][1]];     //2
             Point2f lshoulder = points[POSE_PAIRS[midx][4][1]];     //5
             Point2f relbow = points[POSE_PAIRS[midx][2][1]];        //3
@@ -225,6 +227,7 @@ int main(int argc, char** argv)
 
             // scale to image size // float
             head.x *= SX; head.y *= SY;
+            neck.x *= SX; neck.y *= SY;
             rshoulder.x *= SX; rshoulder.y *= SY;
             lshoulder.x *= SX; lshoulder.y *= SY;
             relbow.x *= SX; relbow.y *= SY;
@@ -238,7 +241,7 @@ int main(int argc, char** argv)
             lknee.x *= SX; lknee.y *= SY;
             rankle.x *= SX; rankle.y *= SY;
             lankle.x *= SX; lankle.y *= SY;
-          
+            
 
             // Distance:
             
@@ -247,18 +250,37 @@ int main(int argc, char** argv)
       
             // Degree:
 
-            rknee_deg = degree(rknee.x, torso.x, rknee.y, torso.y);
-            lknee_deg = degree(lknee.x, torso.x, lknee.y, torso.y);
-            legs_deg = lknee_deg - rknee_deg;
-            printf("%lf\n", legs_deg);
+            rknee_deg = degree(torso.x, rknee.x, torso.y, rknee.y);
+            lknee_deg = degree(torso.x, lknee.x, torso.y, lknee.y);
+            legs_deg = rknee_deg - lknee_deg;
+            //printf("%lf\n", legs_deg);
             if (legs_deg > 45) {
                 if (lankle.y > rankle.y && lknee.y > rknee.y) {
+                    // Right raised leg
                     putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                    flag ++ ;
+                    
+                    if (lankle.y >= lpalm.y || lankle.y >= rpalm.y) {
+                        // Right leg raised to danger zone
+                        putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                        
+
+                    }
+
                 }
                 if (rankle.y > lknee.y && rknee.y > lknee.y) {
+                    // Left raised leg
                     putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                    flag++;
+
+                    if (rankle.y >= rpalm.y || rankle.y >= lpalm.y) {
+                        // Left leg raised to danger zone
+
+                    }
                 }
+
             }
+
 
             /*if (rknee_deg < 30 ) {
                 putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
@@ -314,6 +336,8 @@ int main(int argc, char** argv)
 
             ///////////////////////////////// end myedit
         }
+
+        printf("%lf\n", flag);
         imshow("OpenPose", frame);
 
         // Press  ESC on keyboard to exit
