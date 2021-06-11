@@ -122,8 +122,8 @@ int main(int argc, char** argv)
 
 
     //VideoCapture cap("http://192.168.1.255:8080/video?x.mjpeg");  // capture from streaming
-    VideoCapture cap(0); // capture from usb camera
-    //VideoCapture cap("Videoclip3.avi");
+    //VideoCapture cap(0); // capture from usb camera
+    VideoCapture cap("Videoclip3.avi");
     // Check if camera opened successfully
     if (!cap.isOpened()) {
         //printf("hello");
@@ -190,7 +190,7 @@ int main(int argc, char** argv)
             
 
             //Angles define:
-            double lknee_torso_deg, rknee_torso_deg, legs_deg, rknee_rhip_deg, lknee_lhip_deg;
+            double lknee_torso_deg, rknee_torso_deg, legs_deg, rknee_hip_deg, lknee_hip_deg;
 
 
             //Distance define:
@@ -236,67 +236,66 @@ int main(int argc, char** argv)
             dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
             //putText(frame, %lf , Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
       
-            // Degree:
+            ////////////// Degree Based Algorithem:
 
             rknee_torso_deg = degree(torso.x, rknee.x, torso.y, rknee.y);
             lknee_torso_deg = degree(torso.x, lknee.x, torso.y, lknee.y);
             legs_deg = rknee_torso_deg - lknee_torso_deg;
 
-            rknee_rhip_deg = degree(rhip.x, rknee.x, rhip.y, rknee.y);
-            lknee_lhip_deg = degree(lhip.x, lknee.x, lhip.y, lknee.y);
-            
+            rknee_hip_deg = degree(rhip.x, rknee.x, rhip.y, rknee.y);
+            lknee_hip_deg = degree(lhip.x, lknee.x, lhip.y, lknee.y);
 
-            if (legs_deg > 45) {
-                if (lankle.y > rankle.y && lknee.y > rknee.y) {
-                    if (lknee_lhip_deg > 75) {
-                        // Right raised leg
-                        flag = 1;
-                        putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                    }
-                                        
-                    if (lpalm.y >= lankle.y || rpalm.y >= lankle.y) {
-                        if (lknee_lhip_deg > 75) {
-                           // Right leg raised to danger zone
-                           flag = 2;
-                           putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            //printf("%lf\n", rknee_hip_deg);
+
+            if (legs_deg > 35 ) {
+                /////////////////////////////////////////////// Right raised leg
+                if (lankle.y > rankle.y && lknee.y > rknee.y) 
+                {
+                    if (lknee_hip_deg > 80) // make sure that standing leg is Straight
+                    {
+                        if (rknee_hip_deg > 10)
+                        {
+
+                            flag = 1;
+                            putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
                         }
-                        
+
+                        if (rknee_hip_deg < 10)
+                        {
+                            //if (lpalm.y >= lankle.y || rpalm.y >= lankle.y)// Right leg raised to danger zone
+                            //{                           
+                            flag = 2;
+                            putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                            //}
+
+                        }
                     }
 
                 }
-                if (rankle.y > lknee.y && rknee.y > lknee.y) {
-                    if (rknee_rhip_deg > 75) {
-                        // Left raised leg
-                        flag = 3;
-                        putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                    }
-                    
-                    if (rpalm.y >= rankle.y || lpalm.y >= rankle.y) {
-                        if (rknee_rhip_deg > 75) {
-                            // Left leg raised to danger zone
+                /////////////////////////////////////////////// Left raised leg
+                if (rankle.y > lknee.y && rknee.y > lknee.y) 
+                {
+                    if (rknee_hip_deg > 80) // make sure that standing leg is Straight
+                    {
+                        if (lknee_hip_deg > 10)
+                        {
+                            flag = 3;
+                            putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                        }
+
+                        if (lknee_hip_deg < 10)
+                        {
+                            //if (rpalm.y >= rankle.y || lpalm.y >= rankle.y) // Left leg raised to danger zone
+                            //{                           
                             flag = 4;
                             putText(frame, "left leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                            //}
+
                         }
-
                     }
                 }
 
-            }
-
-            // places of dots by (x,y) position only:
-
-            if (head.y < rshoulder.y || head.y < lshoulder.y) {
-                if (rshoulder.y < torso.y && lshoulder.y < torso.y) {
-                    if (torso.y < rhip.y || torso.y < lhip.y) {
-                        //putText(frame, "STANDING", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-
-                    }
-                }
-                
-
-
-            }           
-            //printf("%lf\n", legs_deg);
+            }      
 
             ///////////////////////////////// end myedit
         }
@@ -320,7 +319,6 @@ int main(int argc, char** argv)
         }*/
         //printf("%d", flag);
         
-
         ///////////////////////////////// end myedit
         imshow("OpenPose", frame);
 
