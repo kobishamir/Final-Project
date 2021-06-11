@@ -20,6 +20,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
+#include <opencv2/core/core.hpp>
+
 #include <cmath>
 #include <typeinfo>
 using namespace cv;
@@ -54,7 +56,7 @@ const int POSE_PAIRS[3][20][2] = {
 } };
 
 
-///////////////////////////////// my edit:
+/////////////////////////////// my edit:
 
 double distance(double x1, double x2, double y1, double y2)
 {
@@ -74,7 +76,9 @@ double degree(double x1, double x2, double y1, double y2)
     return deg;
 }
 
-///////////////////////////////// end myedit
+/////////////////////////////// end myedit
+
+
 int main(int argc, char** argv)
 {
     CommandLineParser parser(argc, argv,
@@ -88,6 +92,7 @@ int main(int argc, char** argv)
         "{ t threshold      |  0.1      | threshold or confidence value for the heatmap }"
         "{ s scale          |  0.003922 | scale for blob }"
     );
+
     String modelTxt = samples::findFile(parser.get<string>("proto"));
     String modelBin = samples::findFile(parser.get<string>("model"));
     String imageFile = samples::findFile(parser.get<String>("image"));
@@ -116,9 +121,9 @@ int main(int argc, char** argv)
     // and the image
 
 
-    //VideoCapture cap("mjpeg://192.168.1.255:8081");  // capture from streaming
-    //VideoCapture cap(0); // capture from usb camera
-    VideoCapture cap("Videoclip3.avi");
+    //VideoCapture cap("http://192.168.1.255:8080/video?x.mjpeg");  // capture from streaming
+    VideoCapture cap(0); // capture from usb camera
+    //VideoCapture cap("Videoclip3.avi");
     // Check if camera opened successfully
     if (!cap.isOpened()) {
         //printf("hello");
@@ -126,29 +131,11 @@ int main(int argc, char** argv)
         return -1;
     }
 
-
-
-    /*
-    ////Kobi Shamir edition
-    const std::string videoStreamAddress = "";
-
-    VideoCapture cap;
-    Mat image;
-    if (!cap.open(videoStreamAddress)) {
-        cout << "Error opening video stream or file" << endl;
-        return -1;
-    }
-
-    ////Kobi shamir edition end
-    */
-
-
-    double flag = 0;
+    
     while (1) { // choose between 0-COCO, 1-MPI or 2-HAND
         Mat frame;
         // Capture frame-by-frame
         cap >> frame;
-
         // If the frame is empty, break immediately
         if (frame.empty())
             break;
@@ -162,7 +149,9 @@ int main(int argc, char** argv)
         int W = result.size[3];
         // find the position of the body parts
         vector<Point> points(22);
-        
+
+        int flag = 0;
+
         for (int n = 0; n < nparts; n++)
         {
             // Slice heatmap of corresponding body's part.
@@ -201,7 +190,7 @@ int main(int argc, char** argv)
             
 
             //Angles define:
-            double lknee_deg, rknee_deg, legs_deg;
+            double lknee_torso_deg, rknee_torso_deg, legs_deg, rknee_rhip_deg, lknee_lhip_deg;
 
 
             //Distance define:
@@ -242,7 +231,6 @@ int main(int argc, char** argv)
             rankle.x *= SX; rankle.y *= SY;
             lankle.x *= SX; lankle.y *= SY;
             
-
             // Distance:
             
             dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
@@ -250,45 +238,50 @@ int main(int argc, char** argv)
       
             // Degree:
 
-            rknee_deg = degree(torso.x, rknee.x, torso.y, rknee.y);
-            lknee_deg = degree(torso.x, lknee.x, torso.y, lknee.y);
-            legs_deg = rknee_deg - lknee_deg;
-            //printf("%lf\n", legs_deg);
+            rknee_torso_deg = degree(torso.x, rknee.x, torso.y, rknee.y);
+            lknee_torso_deg = degree(torso.x, lknee.x, torso.y, lknee.y);
+            legs_deg = rknee_torso_deg - lknee_torso_deg;
+
+            rknee_rhip_deg = degree(rhip.x, rknee.x, rhip.y, rknee.y);
+            lknee_lhip_deg = degree(lhip.x, lknee.x, lhip.y, lknee.y);
+            
+
             if (legs_deg > 45) {
                 if (lankle.y > rankle.y && lknee.y > rknee.y) {
-                    // Right raised leg
-                    putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                    flag ++ ;
-                    
-                    if (lankle.y >= lpalm.y || lankle.y >= rpalm.y) {
-                        // Right leg raised to danger zone
-                        putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                    if (lknee_lhip_deg > 75) {
+                        // Right raised leg
+                        flag = 1;
+                        putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                    }
+                                        
+                    if (lpalm.y >= lankle.y || rpalm.y >= lankle.y) {
+                        if (lknee_lhip_deg > 75) {
+                           // Right leg raised to danger zone
+                           flag = 2;
+                           putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                        }
                         
-
                     }
 
                 }
                 if (rankle.y > lknee.y && rknee.y > lknee.y) {
-                    // Left raised leg
-                    putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                    flag++;
-
-                    if (rankle.y >= rpalm.y || rankle.y >= lpalm.y) {
-                        // Left leg raised to danger zone
+                    if (rknee_rhip_deg > 75) {
+                        // Left raised leg
+                        flag = 3;
+                        putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                    }
+                    
+                    if (rpalm.y >= rankle.y || lpalm.y >= rankle.y) {
+                        if (rknee_rhip_deg > 75) {
+                            // Left leg raised to danger zone
+                            flag = 4;
+                            putText(frame, "left leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                        }
 
                     }
                 }
 
             }
-
-
-            /*if (rknee_deg < 30 ) {
-                putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            }
-            if (lknee_deg > 130) {
-                putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            }*/
-
 
             // places of dots by (x,y) position only:
 
@@ -302,42 +295,33 @@ int main(int argc, char** argv)
                 
 
 
-            }
-
-            // raising hands - working:
-            /*
-            if (rpalm.y < head.y)
-                {
-                if (lpalm.y < head.y)
-                    {
-                    putText(frame, "Both hands raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                    }
-                else
-                    {//printf("Right hand raised ");
-                    putText(frame, "Right hand raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-
-                    }
-                }
-            if (lpalm.y < head.y)
-            {
-                if (rpalm.y < head.y)
-                {
-                    putText(frame, "Both hands raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                }
-                else
-                {
-                    //printf("Left hand raised ");
-                    putText(frame, "Left hand raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(100, 10, 10), 2);
-                }
-            }
-
-            */
-            
+            }           
+            //printf("%lf\n", legs_deg);
 
             ///////////////////////////////// end myedit
         }
+        // end for loop
 
-        printf("%lf\n", flag);
+        ///////////////////////////////// my edit:
+        
+     /*   switch(flag) {
+            case 1:
+                putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                break;
+            case 2:
+                putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                break;
+            case 3:
+                putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                break;
+            case 4:
+                putText(frame, "left leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                break;       
+        }*/
+        //printf("%d", flag);
+        
+
+        ///////////////////////////////// end myedit
         imshow("OpenPose", frame);
 
         // Press  ESC on keyboard to exit
@@ -353,3 +337,4 @@ int main(int argc, char** argv)
     destroyAllWindows();
     return 0;
 }
+
