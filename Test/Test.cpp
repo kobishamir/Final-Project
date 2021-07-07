@@ -19,15 +19,20 @@
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-
 #include <opencv2/core/core.hpp>
-
 #include <cmath>
 #include <typeinfo>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
 using namespace cv;
 using namespace cv::dnn;
-#include <iostream>
+
+
 using namespace std;
+vector<int> trashold;
 // connection table, in the format [model_id][pair_id][from/to]
 // please look at the nice explanation at the bottom of:
 // https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md
@@ -58,13 +63,16 @@ const int POSE_PAIRS[3][20][2] = {
 
 /////////////////////////////// my edit:
 
+enum position { nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5 };
+position pose = nothing;
+
 double distance(double x1, double x2, double y1, double y2)
 {
     double power, dis;
 
-    power = pow( x1 - x2, 2) + pow(y1 - y2, 2);
+    power = pow(x1 - x2, 2) + pow(y1 - y2, 2);
     dis = sqrt(power);
-    
+
     return dis;
 }
 
@@ -75,6 +83,35 @@ double degree(double x1, double x2, double y1, double y2)
 
     return deg;
 }
+
+vector<int> extractIntegerWords(string str)
+{
+    stringstream ss;
+    vector<int> out;
+
+    /* Storing the whole string into string stream */
+    ss << str;
+
+    /* Running loop till the end of the stream */
+    string temp;
+    int found;
+    while (!ss.eof()) {
+
+        /* extracting word by word from stream */
+        ss >> temp;
+
+        /* Checking the given word is integer or not */
+        if (stringstream(temp) >> found)
+            out.push_back(found);
+
+        /* To save from space at the end of string */
+        temp = "";
+    }
+
+    return out;
+}
+
+
 
 /////////////////////////////// end myedit
 
@@ -120,22 +157,31 @@ int main(int argc, char** argv)
     Net net = readNet(modelBin, modelTxt);
     // and the image
 
+    string myText;
+    ifstream MyReadFile("C:\\Open-CV\\Test\\Test\\Calibration\\Calibration_coordinate.txt");
+    while (getline(MyReadFile, myText)) {
+        // Output the text from the file
+        trashold = extractIntegerWords(myText);
+    }
+    int y = trashold[1];
+    //cout << trashold << endl;
 
-    //VideoCapture cap("http://192.168.1.255:8080/video?x.mjpeg");  // capture from streaming
+    //VideoCapture cap;  // capture from streaming
     //VideoCapture cap(0); // capture from usb camera
     VideoCapture cap("Videoclip1.avi");
     // Check if camera opened successfully
+    //cap.open("http://pi:93155559@192.168.1.110:8081/video?x.mjpeg");
     if (!cap.isOpened()) {
-        //printf("hello");
         cout << "Error opening video stream or file" << endl;
         return -1;
     }
 
-    
+
     while (1) { // choose between 0-COCO, 1-MPI or 2-HAND
         Mat frame;
         // Capture frame-by-frame
         cap >> frame;
+        frame.convertTo(frame, -1, 1, 50);
         // If the frame is empty, break immediately
         if (frame.empty())
             break;
@@ -150,8 +196,7 @@ int main(int argc, char** argv)
         // find the position of the body parts
         vector<Point> points(22);
 
-        enum position {nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5};
-        position pose = nothing;
+
 
 
         for (int n = 0; n < nparts; n++)
@@ -185,11 +230,11 @@ int main(int argc, char** argv)
             circle(frame, b, 3, Scalar(0, 0, 200), -1);
 
             ///////////////////////////////// my edit:
-            
+
             // cuda implamentation??
-            // net.setPreferableBackend(DNN_BACKEND_CUDA);
-            // net.setPreferableTarget(DNN_TARGET_CUDA);
-            
+             //net.setPreferableBackend(DNN_BACKEND_CUDA);
+             //net.setPreferableTarget(DNN_TARGET_CUDA);
+
 
             //Angles define:
             double lknee_cheast_deg, rknee_cheast_deg, legs_deg, rknee_hip_deg, lknee_hip_deg;
@@ -216,7 +261,9 @@ int main(int argc, char** argv)
             Point2f rankle = points[POSE_PAIRS[midx][10][1]];       //10
             Point2f lankle = points[POSE_PAIRS[midx][13][1]];       //13
 
+
             // scale to image size // float
+            float y_tresh = y * SY;
             head.x *= SX; head.y *= SY;
             neck.x *= SX; neck.y *= SY;
             rshoulder.x *= SX; rshoulder.y *= SY;
@@ -232,7 +279,11 @@ int main(int argc, char** argv)
             lknee.x *= SX; lknee.y *= SY;
             rankle.x *= SX; rankle.y *= SY;
             lankle.x *= SX; lankle.y *= SY;
-            
+
+            if (head.y < y_tresh)
+            {
+                // put your trigger code here
+            }
 
             rknee_cheast_deg = degree(cheast.x, rknee.x, cheast.y, rknee.y);
             lknee_cheast_deg = degree(cheast.x, lknee.x, cheast.y, lknee.y);
@@ -243,21 +294,18 @@ int main(int argc, char** argv)
 
             // Standing position:
 
-            if (legs_deg < 35) {
-                if (rknee_hip_deg > 85 || lknee_hip_deg > 85) {
-                    if (head.y < neck.y) {
-                        if (head.y < rshoulder.y && head.y < lshoulder.y) {
-                            if (neck.y < cheast.y) {
-                                if (cheast.y < rknee.y && cheast.y < lknee.y) {
-                                    if (rknee.y < rankle.y && rknee.y < lankle.y) {
-                                        //flag = 5;
-                                        pose = standing;
-                                    }
-                                    else if (lknee.y < lankle.y && lknee.y < rankle.y) {
-                                        //flag = 5;
-                                        pose = standing;
-                                    }
-                                }
+            if (legs_deg < 35) 
+            {
+                if (rknee_hip_deg > 85 || lknee_hip_deg > 85) 
+                {
+                    if ((head.y < neck.y) && (head.y < rshoulder.y && head.y < lshoulder.y))
+                    {
+                        if ((neck.y < cheast.y) && (cheast.y < rknee.y && cheast.y < lknee.y))
+                        {
+                            if ((rknee.y < rankle.y && rknee.y < lankle.y) || (lknee.y < lankle.y && lknee.y < rankle.y))
+                            {
+                                //flag = 5;
+                                pose = standing;
                             }
                         }
                     }
@@ -265,16 +313,16 @@ int main(int argc, char** argv)
             }
 
             // Distance:
-            
+
             dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
             //putText(frame, %lf , Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-      
+
 
             ////////////// Degree Based Algorithem:
 
-            if (legs_deg > 35 ) {
+            if (legs_deg > 35) {
                 /////////////////////////////////////////////// Right raised leg
-                if (lankle.y > rankle.y && lknee.y > rknee.y) 
+                if (lankle.y > rankle.y && lknee.y > rknee.y)
                 {
                     if (lknee_hip_deg > 80) // make sure that standing leg is Straight
                     {
@@ -298,7 +346,7 @@ int main(int argc, char** argv)
 
                 }
                 /////////////////////////////////////////////// Left raised leg
-                if (rankle.y > lknee.y && rknee.y > lknee.y) 
+                if (rankle.y > lknee.y && rknee.y > lknee.y)
                 {
                     if (rknee_hip_deg > 80) // make sure that standing leg is Straight
                     {
@@ -320,32 +368,32 @@ int main(int argc, char** argv)
                     }
                 }
 
-            }      
+            }
 
             ///////////////////////////////// end myedit
         }
         // end for loop
 
         ///////////////////////////////// my edit:
-        
-        switch(pose) {
-            case right_leg:
-                putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                break;
-            case right_leg_danger:
-                putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                break;
-            case left_leg:
-                putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                break;
-            case left_leg_danger:
-                putText(frame, "left leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                break;
-            case standing:
-                putText(frame, "standing", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                break;
+
+        switch (pose) {
+        case right_leg:
+            putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            break;
+        case right_leg_danger:
+            putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            break;
+        case left_leg:
+            putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            break;
+        case left_leg_danger:
+            putText(frame, "left leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            break;
+        case standing:
+            putText(frame, "standing", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            break;
         }
-        
+
         ///////////////////////////////// end myedit
         imshow("OpenPose", frame);
 
