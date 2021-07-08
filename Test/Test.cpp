@@ -63,7 +63,7 @@ const int POSE_PAIRS[3][20][2] = {
 
 /////////////////////////////// my edit:
 
-enum position { nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5 };
+enum position { nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5, climbing_attempt = 6};
 position pose = nothing;
 
 double distance(double x1, double x2, double y1, double y2)
@@ -164,11 +164,10 @@ int main(int argc, char** argv)
         trashold = extractIntegerWords(myText);
     }
     int y = trashold[1];
-    //cout << trashold << endl;
 
     //VideoCapture cap;  // capture from streaming
-    //VideoCapture cap(0); // capture from usb camera
-    VideoCapture cap("Videoclip1.avi");
+    VideoCapture cap(0); // capture from usb camera
+    //VideoCapture cap("Videoclip1.avi");
     // Check if camera opened successfully
     //cap.open("http://pi:93155559@192.168.1.110:8081/video?x.mjpeg");
     if (!cap.isOpened()) {
@@ -231,11 +230,6 @@ int main(int argc, char** argv)
 
             ///////////////////////////////// my edit:
 
-            // cuda implamentation??
-             //net.setPreferableBackend(DNN_BACKEND_CUDA);
-             //net.setPreferableTarget(DNN_TARGET_CUDA);
-
-
             //Angles define:
             double lknee_cheast_deg, rknee_cheast_deg, legs_deg, rknee_hip_deg, lknee_hip_deg;
 
@@ -278,12 +272,7 @@ int main(int argc, char** argv)
             rknee.x *= SX; rknee.y *= SY;
             lknee.x *= SX; lknee.y *= SY;
             rankle.x *= SX; rankle.y *= SY;
-            lankle.x *= SX; lankle.y *= SY;
-
-            if (head.y < y_tresh)
-            {
-                // put your trigger code here
-            }
+            lankle.x *= SX; lankle.y *= SY;           
 
             rknee_cheast_deg = degree(cheast.x, rknee.x, cheast.y, rknee.y);
             lknee_cheast_deg = degree(cheast.x, lknee.x, cheast.y, lknee.y);
@@ -292,11 +281,17 @@ int main(int argc, char** argv)
             rknee_hip_deg = degree(rhip.x, rknee.x, rhip.y, rknee.y);
             lknee_hip_deg = degree(lhip.x, lknee.x, lhip.y, lknee.y);
 
+            if (head.y < y_tresh)
+            {
+                // put your trigger code here
+                putText(frame, "TRIGER", Point(10, 100), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            }
+
             // Standing position:
 
             if (legs_deg < 35) 
             {
-                if (rknee_hip_deg > 85 || lknee_hip_deg > 85) 
+                if (rknee_hip_deg < 105 || lknee_hip_deg > 85) 
                 {
                     if ((head.y < neck.y) && (head.y < rshoulder.y && head.y < lshoulder.y))
                     {
@@ -312,6 +307,7 @@ int main(int argc, char** argv)
                 }
             }
 
+            printf("%lf\n", lknee_hip_deg);
             // Distance:
 
             dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
@@ -322,54 +318,56 @@ int main(int argc, char** argv)
 
             if (legs_deg > 35) {
                 /////////////////////////////////////////////// Right raised leg
-                if (lankle.y > rankle.y && lknee.y > rknee.y)
+
+                if (lankle.y > rankle.y && lknee.y > rknee.y) // right ankle is higher than left ankle and right knee is higher than left knee
                 {
-                    if (lknee_hip_deg > 80) // make sure that standing leg is Straight
+                    if (lknee_hip_deg > 80) // make sure that left leg leg is Straight
                     {
                         if (rknee_hip_deg > 10)
                         {
-
-                            //flag = 1;
-                            pose = right_leg;
+                            pose = right_leg; // right leg raised
                         }
 
                         if (rknee_hip_deg < 10)
                         {
-                            //if (lpalm.y >= lankle.y || rpalm.y >= lankle.y)// Right leg raised to danger zone
-                            //{                           
-                            //flag = 2;
+                            if (lpalm.y >= lankle.y || rpalm.y >= lankle.y) // Right leg raised to hands hight level
+                            {
+                                pose = climbing_attempt;
+                            }
+                            else
+                            {
                             pose = right_leg_danger;
-                            //}
-
+                            }
                         }
                     }
-
                 }
                 /////////////////////////////////////////////// Left raised leg
-                if (rankle.y > lknee.y && rknee.y > lknee.y)
+
+                if (rankle.y > lknee.y && rknee.y > lknee.y) // left ankle is higher than right ankle and left knee is higher than right knee
                 {
-                    if (rknee_hip_deg > 80) // make sure that standing leg is Straight
+                    if (rknee_hip_deg < 105) // make sure that right leg is Straight
                     {
                         if (lknee_hip_deg > 10)
                         {
                             //flag = 3;
-                            pose = left_leg;
+                            pose = left_leg; // left leg raised
                         }
 
                         if (lknee_hip_deg < 10)
                         {
-                            //if (rpalm.y >= rankle.y || lpalm.y >= rankle.y) // Left leg raised to danger zone
-                            //{                           
-                            //flag = 4;
+                            if (rpalm.y >= rankle.y || lpalm.y >= rankle.y) // Left leg raised to hands hight leve
+                            {
+                                pose = climbing_attempt;
+                            }
+                            else
+                            {
                             pose = left_leg_danger;
-                            //}
-
+                            }
                         }
                     }
                 }
-
             }
-
+          
             ///////////////////////////////// end myedit
         }
         // end for loop
@@ -392,8 +390,11 @@ int main(int argc, char** argv)
         case standing:
             putText(frame, "standing", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
             break;
+        case climbing_attempt:
+            putText(frame, "Baby is trying to climb out", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            break;
         }
-
+            
         ///////////////////////////////// end myedit
         imshow("OpenPose", frame);
 
