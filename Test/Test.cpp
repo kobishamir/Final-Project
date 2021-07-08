@@ -291,7 +291,7 @@ int main(int argc, char** argv)
 
             if (legs_deg < 35) 
             {
-                if (rknee_hip_deg < 105 || lknee_hip_deg > 85) 
+                if (rknee_hip_deg < 105 && lknee_hip_deg > 85) 
                 {
                     if ((head.y < neck.y) && (head.y < rshoulder.y && head.y < lshoulder.y))
                     {
