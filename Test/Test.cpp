@@ -63,7 +63,7 @@ const int POSE_PAIRS[3][20][2] = {
 
 /////////////////////////////// my edit:
 
-enum position { nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5, climbing_attempt = 6};
+enum position { nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5, climbing_attempt = 6, thresh_hold = 7};
 position pose = nothing;
 
 double distance(double x1, double x2, double y1, double y2)
@@ -163,13 +163,13 @@ int main(int argc, char** argv)
         // Output the text from the file
         trashold = extractIntegerWords(myText);
     }
-    int y = trashold[1];
+    float y = trashold[1];
 
     //VideoCapture cap;  // capture from streaming
-    VideoCapture cap(0); // capture from usb camera
-    //VideoCapture cap("Videoclip1.avi");
+    //VideoCapture cap(0); // capture from usb camera
+    VideoCapture cap("Eytan_2.avi");
+
     // Check if camera opened successfully
-    //cap.open("http://pi:93155559@192.168.1.110:8081/video?x.mjpeg");
     if (!cap.isOpened()) {
         cout << "Error opening video stream or file" << endl;
         return -1;
@@ -284,8 +284,11 @@ int main(int argc, char** argv)
             if (head.y < y_tresh)
             {
                 // put your trigger code here
-                putText(frame, "TRIGER", Point(10, 100), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                //putText(frame, "TRIGER", Point(10, 100), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+                pose = thresh_hold;
             }
+
+            //printf("%f\n", head.y);
 
             // Standing position:
 
@@ -307,7 +310,8 @@ int main(int argc, char** argv)
                 }
             }
 
-            printf("%lf\n", lknee_hip_deg);
+            
+            //printf("%lf\n", lknee_hip_deg);
             // Distance:
 
             dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
@@ -330,7 +334,7 @@ int main(int argc, char** argv)
 
                         if (rknee_hip_deg < 10)
                         {
-                            if (lpalm.y >= lankle.y || rpalm.y >= lankle.y) // Right leg raised to hands hight level
+                            if (lpalm.y >= rankle.y || rpalm.y >= rankle.y) // Right leg raised to hands hight level
                             {
                                 pose = climbing_attempt;
                             }
@@ -355,7 +359,7 @@ int main(int argc, char** argv)
 
                         if (lknee_hip_deg < 10)
                         {
-                            if (rpalm.y >= rankle.y || lpalm.y >= rankle.y) // Left leg raised to hands hight leve
+                            if (rpalm.y >= lankle.y || lpalm.y >= lankle.y) // Left leg raised to hands hight leve
                             {
                                 pose = climbing_attempt;
                             }
@@ -391,7 +395,10 @@ int main(int argc, char** argv)
             putText(frame, "standing", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
             break;
         case climbing_attempt:
-            putText(frame, "Baby is trying to climb out", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            putText(frame, "Climbing attempt", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            break;
+        case thresh_hold:
+            putText(frame, "Baby is awake", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
             break;
         }
             
