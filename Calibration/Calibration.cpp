@@ -48,7 +48,7 @@ static void onMouse(int event, int x, int y, int, void*)
 int main()
 {
     //VideoCapture cap(0);
-    VideoCapture cap("C:\\Open-CV\\Test\\Test\\Test\\Eytan_2.avi");
+    VideoCapture cap("C:\\Open-CV\\Test\\Test\\Test\\Eytan_1.avi");
     namedWindow("image", 0);
     setMouseCallback("image", onMouse, 0);
     while (1) { // choose between 0-COCO, 1-MPI or 2-HAND
@@ -71,7 +71,7 @@ int main()
         imshow("image", frame);
 
         // Press  ESC on keyboard to exit
-        char c = (char)waitKey(35); // use 1 for USB camera, use 40 for videoclip
+        char c = (char)waitKey(60); // use 1 for USB camera, use 60 for videoclip
         if (c == 27)
             break;
         

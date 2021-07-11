@@ -60,10 +60,7 @@ const int POSE_PAIRS[3][20][2] = {
     {0,17}, {17,18}, {18,19}, {19,20}   // small
 } };
 
-
-/////////////////////////////// my edit:
-
-enum position { nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5, climbing_attempt = 6, thresh_hold = 7};
+enum position { nothing = 0, right_leg = 1, right_leg_danger = 2, left_leg = 3, left_leg_danger = 4, standing = 5, climbing_attempt = 6, thresh_hold = 7 };
 position pose = nothing;
 
 double distance(double x1, double x2, double y1, double y2)
@@ -110,11 +107,6 @@ vector<int> extractIntegerWords(string str)
 
     return out;
 }
-
-
-
-/////////////////////////////// end myedit
-
 
 int main(int argc, char** argv)
 {
@@ -165,9 +157,8 @@ int main(int argc, char** argv)
     }
     float y = trashold[1];
 
-    //VideoCapture cap;  // capture from streaming
     //VideoCapture cap(0); // capture from usb camera
-    VideoCapture cap("Eytan_2.avi");
+    VideoCapture cap("Kobi_2.avi");
 
     // Check if camera opened successfully
     if (!cap.isOpened()) {
@@ -175,7 +166,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-
+    int flag = 0;
     while (1) { // choose between 0-COCO, 1-MPI or 2-HAND
         Mat frame;
         // Capture frame-by-frame
@@ -194,9 +185,6 @@ int main(int argc, char** argv)
         int W = result.size[3];
         // find the position of the body parts
         vector<Point> points(22);
-
-
-
 
         for (int n = 0; n < nparts; n++)
         {
@@ -228,14 +216,9 @@ int main(int argc, char** argv)
             circle(frame, a, 3, Scalar(0, 0, 200), -1);
             circle(frame, b, 3, Scalar(0, 0, 200), -1);
 
-            ///////////////////////////////// my edit:
 
             //Angles define:
             double lknee_cheast_deg, rknee_cheast_deg, legs_deg, rknee_hip_deg, lknee_hip_deg;
-
-
-            //Distance define:
-            double dist;
 
 
             // Body parts defintion
@@ -272,7 +255,7 @@ int main(int argc, char** argv)
             rknee.x *= SX; rknee.y *= SY;
             lknee.x *= SX; lknee.y *= SY;
             rankle.x *= SX; rankle.y *= SY;
-            lankle.x *= SX; lankle.y *= SY;           
+            lankle.x *= SX; lankle.y *= SY;
 
             rknee_cheast_deg = degree(cheast.x, rknee.x, cheast.y, rknee.y);
             lknee_cheast_deg = degree(cheast.x, lknee.x, cheast.y, lknee.y);
@@ -281,20 +264,20 @@ int main(int argc, char** argv)
             rknee_hip_deg = degree(rhip.x, rknee.x, rhip.y, rknee.y);
             lknee_hip_deg = degree(lhip.x, lknee.x, lhip.y, lknee.y);
 
-            if (head.y < y_tresh)
+            if (head.y < y)
             {
-                // put your trigger code here
-                //putText(frame, "TRIGER", Point(10, 100), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-                pose = thresh_hold;
+                if (flag == 0)
+                {
+                    // put your trigger code here
+                    pose = thresh_hold;
+                }
             }
-
-            //printf("%f\n", head.y);
 
             // Standing position:
 
-            if (legs_deg < 35) 
+            if (legs_deg < 35)
             {
-                if (rknee_hip_deg < 105 && lknee_hip_deg > 85) 
+                if (rknee_hip_deg < 105 && lknee_hip_deg > 85)
                 {
                     if ((head.y < neck.y) && (head.y < rshoulder.y && head.y < lshoulder.y))
                     {
@@ -302,20 +285,12 @@ int main(int argc, char** argv)
                         {
                             if ((rknee.y < rankle.y && rknee.y < lankle.y) || (lknee.y < lankle.y && lknee.y < rankle.y))
                             {
-                                //flag = 5;
                                 pose = standing;
                             }
                         }
                     }
                 }
             }
-
-            
-            //printf("%lf\n", lknee_hip_deg);
-            // Distance:
-
-            dist = distance(rpalm.x, lpalm.x, rpalm.y, lpalm.y);
-            //putText(frame, %lf , Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
 
 
             ////////////// Degree Based Algorithem:
@@ -340,7 +315,7 @@ int main(int argc, char** argv)
                             }
                             else
                             {
-                            pose = right_leg_danger;
+                                pose = right_leg_danger;
                             }
                         }
                     }
@@ -353,7 +328,6 @@ int main(int argc, char** argv)
                     {
                         if (lknee_hip_deg > 10)
                         {
-                            //flag = 3;
                             pose = left_leg; // left leg raised
                         }
 
@@ -365,44 +339,47 @@ int main(int argc, char** argv)
                             }
                             else
                             {
-                            pose = left_leg_danger;
+                                pose = left_leg_danger;
                             }
                         }
                     }
                 }
             }
-          
-            ///////////////////////////////// end myedit
         }
-        // end for loop
 
-        ///////////////////////////////// my edit:
 
         switch (pose) {
         case right_leg:
             putText(frame, "right leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            pose = nothing;
             break;
         case right_leg_danger:
             putText(frame, "Right leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            pose = nothing;
             break;
         case left_leg:
             putText(frame, "left leg raised", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            pose = nothing;
             break;
         case left_leg_danger:
             putText(frame, "left leg raised to danger zone", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            pose = nothing;
             break;
         case standing:
             putText(frame, "standing", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            pose = nothing;
             break;
         case climbing_attempt:
             putText(frame, "Climbing attempt", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            pose = nothing;
             break;
         case thresh_hold:
-            putText(frame, "Baby is awake", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            //putText(frame, "Baby is awake", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            pose = standing;
+            flag = 1;
             break;
         }
-            
-        ///////////////////////////////// end myedit
+
         imshow("OpenPose", frame);
 
         // Press  ESC on keyboard to exit
@@ -418,4 +395,3 @@ int main(int argc, char** argv)
     destroyAllWindows();
     return 0;
 }
-
