@@ -1,20 +1,12 @@
-//
-//  this sample demonstrates the use of pretrained openpose networks with opencv's dnn module.
-//
-//  it can be used for body pose detection, using either the COCO model(18 parts):
-//  http://posefs1.perception.cs.cmu.edu/OpenPose/models/pose/coco/pose_iter_440000.caffemodel
-//  https://raw.githubusercontent.com/opencv/opencv_extra/master/testdata/dnn/openpose_pose_coco.prototxt
-//
-//  or the MPI model(16 parts):
+//  Jaccob Avihai Shamir
+//  204034920
+//  
+//  The MPI model(16 parts):
 //  http://posefs1.perception.cs.cmu.edu/OpenPose/models/pose/mpi/pose_iter_160000.caffemodel
 //  https://raw.githubusercontent.com/opencv/opencv_extra/master/testdata/dnn/openpose_pose_mpi_faster_4_stages.prototxt
 //
 //  (to simplify this sample, the body models are restricted to a single person.)
 //
-//
-//  you can also try the hand pose model:
-//  http://posefs1.perception.cs.cmu.edu/OpenPose/models/hand/pose_iter_102000.caffemodel
-//  https://raw.githubusercontent.com/CMU-Perceptual-Computing-Lab/openpose/master/models/hand/pose_deploy.prototxt
 //
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc.hpp>
@@ -29,9 +21,8 @@
 
 using namespace cv;
 using namespace cv::dnn;
-
-
 using namespace std;
+
 vector<int> trashold;
 // connection table, in the format [model_id][pair_id][from/to]
 // please look at the nice explanation at the bottom of:
@@ -295,21 +286,21 @@ int main(int argc, char** argv)
 
             ////////////// Degree Based Algorithem:
 
-            if (legs_deg > 35) {
-                /////////////////////////////////////////////// Right raised leg
+            if (legs_deg > 35) 
+            {
 
-                if (lankle.y > rankle.y && lknee.y > rknee.y) // right ankle is higher than left ankle and right knee is higher than left knee
+                if (lankle.y > rankle.y && lknee.y > rknee.y) // Right leg raised
                 {
                     if (lknee_hip_deg > 80) // make sure that left leg leg is Straight
                     {
                         if (rknee_hip_deg > 10)
                         {
-                            pose = right_leg; // right leg raised
+                            pose = right_leg;
                         }
 
                         if (rknee_hip_deg < 10)
                         {
-                            if (lpalm.y >= rankle.y || rpalm.y >= rankle.y) // Right leg raised to hands hight level
+                            if (lpalm.y >= rankle.y || rpalm.y >= rankle.y) 
                             {
                                 pose = climbing_attempt;
                             }
@@ -320,20 +311,19 @@ int main(int argc, char** argv)
                         }
                     }
                 }
-                /////////////////////////////////////////////// Left raised leg
-
-                if (rankle.y > lknee.y && rknee.y > lknee.y) // left ankle is higher than right ankle and left knee is higher than right knee
+                
+                if (rankle.y > lknee.y && rknee.y > lknee.y) // Left leg raised
                 {
                     if (rknee_hip_deg < 105) // make sure that right leg is Straight
                     {
                         if (lknee_hip_deg > 10)
                         {
-                            pose = left_leg; // left leg raised
+                            pose = left_leg;
                         }
 
                         if (lknee_hip_deg < 10)
                         {
-                            if (rpalm.y >= lankle.y || lpalm.y >= lankle.y) // Left leg raised to hands hight leve
+                            if (rpalm.y >= lankle.y || lpalm.y >= lankle.y)
                             {
                                 pose = climbing_attempt;
                             }
@@ -374,7 +364,7 @@ int main(int argc, char** argv)
             pose = nothing;
             break;
         case thresh_hold:
-            //putText(frame, "Baby is awake", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
+            putText(frame, "Baby is awake", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
             pose = standing;
             flag = 1;
             break;

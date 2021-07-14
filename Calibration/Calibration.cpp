@@ -75,7 +75,6 @@ int main()
         if (c == 27)
             break;
         
-        //printf("%d\n", first.y);
     }
 
     // When everything done, release the video capture object
