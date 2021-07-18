@@ -148,8 +148,8 @@ int main(int argc, char** argv)
     }
     float y = trashold[1];
 
-    //VideoCapture cap(0); // capture from usb camera
-    VideoCapture cap("Kobi_2.avi");
+    VideoCapture cap(0); // capture from usb camera
+    //VideoCapture cap("Kobi_2.avi");
 
     // Check if camera opened successfully
     if (!cap.isOpened()) {
@@ -255,12 +255,16 @@ int main(int argc, char** argv)
             rknee_hip_deg = degree(rhip.x, rknee.x, rhip.y, rknee.y);
             lknee_hip_deg = degree(lhip.x, lknee.x, lhip.y, lknee.y);
 
-            if (head.y < y)
+            if (head.y < y_tresh)
             {
                 if (flag == 0)
                 {
                     // put your trigger code here
                     pose = thresh_hold;
+                }
+                if (flag == 1)
+                {
+                    pose = nothing;
                 }
             }
 
@@ -365,7 +369,7 @@ int main(int argc, char** argv)
             break;
         case thresh_hold:
             putText(frame, "Baby is awake", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            pose = standing;
+            //pose = standing;
             flag = 1;
             break;
         }

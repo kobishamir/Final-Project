@@ -47,8 +47,8 @@ static void onMouse(int event, int x, int y, int, void*)
 
 int main()
 {
-    //VideoCapture cap(0);
-    VideoCapture cap("C:\\Open-CV\\Test\\Test\\Test\\Eytan_1.avi");
+    VideoCapture cap(0);
+    //VideoCapture cap("C:\\Open-CV\\Test\\Test\\Test\\Eytan_1.avi");
     namedWindow("image", 0);
     setMouseCallback("image", onMouse, 0);
     while (1) { // choose between 0-COCO, 1-MPI or 2-HAND
