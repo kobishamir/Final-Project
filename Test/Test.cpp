@@ -102,14 +102,14 @@ vector<int> extractIntegerWords(string str)
 int main(int argc, char** argv)
 {
     CommandLineParser parser(argc, argv,
-        "{ h help           | false     | print this help message }"
+        "{ h help           | fulse     | print this help message }"
         "{ p proto          |           | (required) model configuration, e.g. hand/pose.prototxt }"
         "{ m model          |           | (required) model weights, e.g. hand/pose_iter_102000.caffemodel }"
         "{ i image          |           | (required) path to image file (containing a single person, or hand) }"
         "{ d dataset        |           | specify what kind of model was trained. It could be (COCO, MPI, HAND) depends on dataset. }"
-        "{ width            |  368      | Preprocess input image by resizing to a specific width. }"
-        "{ height           |  368      | Preprocess input image by resizing to a specific height. }"
-        "{ t threshold      |  0.1      | threshold or confidence value for the heatmap }"
+        "{ width            |  300      | Preprocess input image by resizing to a specific width. }"// originaly 368
+        "{ height           |  300      | Preprocess input image by resizing to a specific height. }"
+        "{ t threshold      |  0.05     | threshold or confidence value for the heatmap }"
         "{ s scale          |  0.003922 | scale for blob }"
     );
 
@@ -148,8 +148,8 @@ int main(int argc, char** argv)
     }
     float y = trashold[1];
 
-    VideoCapture cap(0); // capture from usb camera
-    //VideoCapture cap("Kobi_2.avi");
+    //VideoCapture cap(0); // capture from usb camera
+    VideoCapture cap("Kobi_2.avi");
 
     // Check if camera opened successfully
     if (!cap.isOpened()) {
@@ -262,11 +262,7 @@ int main(int argc, char** argv)
                     // put your trigger code here
                     pose = thresh_hold;
                 }
-                if (flag == 1)
-                {
-                    pose = nothing;
-                }
-            }
+             }
 
             // Standing position:
 
@@ -369,7 +365,7 @@ int main(int argc, char** argv)
             break;
         case thresh_hold:
             putText(frame, "Baby is awake", Point(10, 25), FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(200, 10, 10), 2);
-            //pose = standing;
+            pose = nothing;
             flag = 1;
             break;
         }

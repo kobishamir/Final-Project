@@ -71,7 +71,7 @@ int main()
         imshow("image", frame);
 
         // Press  ESC on keyboard to exit
-        char c = (char)waitKey(60); // use 1 for USB camera, use 60 for videoclip
+        char c = (char)waitKey(1); // use 1 for USB camera, use 60 for videoclip
         if (c == 27)
             break;
         
